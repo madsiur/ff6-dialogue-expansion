@@ -1,0 +1,27 @@
+#################################
+# Dialogue Loading function     #
+# FF3us 1.0 (ff3usme expansion) #
+#################################
+
+C0/7FBF: 7B         	TDC             (Clear the accumulator)
+C0/7FC0: AA         	TAX             (Clear X)
+C0/7FC1: C2 20      	REP #$20        (16 bit accum./memory)
+C0/7FC3: A5 D0      	LDA $D0         (Get dialog index)
+C0/7FC5: E8         	INX 
+C0/7FC6: E8         	INX 
+C0/7FC7: E8         	INX 
+C0/7FC8: DF 7D DF C0	CMP $C0DF7D,x   (Compare to bank CD or CE last dialog index)
+C0/7FCC: B0 F7      	BCS $7FC5       (Loop if dialog index is greater or equal)
+C0/7FCE: 0A         	ASL             (Times 2 since pointers are 2 bytes)
+C0/7FCF: 48         	PHA             (Save pointer offset)
+C0/7FD0: BF 7E DF C0	LDA $C0DF7E,x   (Load short with bank value)
+C0/7FD4: 85 CA      	STA $CA         (Store bank value in $CB)
+C0/7FD6: FA         	PLX             (Index pointer offset)
+C0/7FD7: BF 02 E6 CC	LDA $CCE602,x   (Loads pointer to dialogue X)
+C0/7FDB: 85 C9      	STA $C9         (The pointer goes in $C9)
+C0/7FDD: E2 20      	SEP #$20        (8 bit accum./memory)
+C0/7FDF: 7B         	TDC             (Clear the accumulator)
+C0/7FE0: 1A         	INC             (Accumulator is now 1)
+C0/7FE1: 8D 68 05   	STA $0568       (Store 1 into $0568)
+C0/7FE4: 60         	RTS 
+

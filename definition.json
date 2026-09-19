@@ -1,0 +1,15 @@
+{
+    "new_dialog_ptr_start": "0xCCE600",
+    "new_dialog_start": "0xF30000",
+    "ff3usme_expansion": false,
+    "last_bank_cd_dialog_index": "0xCCE600",
+    "dialog_ptr_start": "0xCCE602",
+    "dialog_ptr_end": "0xCCFFFF",
+    "dialog_start": "0xCD0000",
+    "dialog_end": "0xCEF0FF",
+    "ff3usme_dialog_start": "0xF00000",
+    "ff3usme_dialog_end": "0xF0FFFF",
+    "ff3usme_last_bank_cd_dialog_index": "0xC0DF80",
+    "ff3usme_last_bank_ce_dialog_index": "0xC0DF83",
+    "ff3de_expansion": false
+}

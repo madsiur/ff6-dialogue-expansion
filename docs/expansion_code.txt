@@ -1,0 +1,20 @@
+##############################
+# Dialogue Loading function  #
+# FF3us 1.0 (expansion)      #
+##############################
+
+C0/7FBF: C2 20    	    REP #$20       (16 bit accum./memory)
+C0/7FC1: A5 D0    	    LDA $D0        (Get dialog index)
+C0/7FC3: 0A      	    ASL A          (Times 2)
+C0/7FC4: 18             CLC            (Clear carry flag)
+C0/7FC5: 65 D0          ADC $D0        (Times 3 since pointers are 3 bytes)
+C0/7FC7: AA      	    TAX            (This gives us the index X)
+C0/7FC8: BF 00 E6 CC	LDA $CCE600,X  (Loads pointer to dialogue X low bytes)
+C0/7FCC: 85 C9    	    STA $C9        (The pointer low bytes goes in $C9)
+C0/7FCE: 7B      	    TDC            (Clear accumulator)
+C0/7FCF: E2 20          SEP #$20       (8 bit accum./memory)
+C0/7FD1: BF 02 E6 CC	LDA $CCE602,X  (Loads pointer to dialogue X bank byte)
+C0/7FD5: 85 CB    	    STA $CB        (The pointer bank byte goes in $CB)
+C0/7FD7: A9 01    	    LDA #$01       (Put a 1 in the accumulator)
+C0/7FD9: 8D 68 05  	    STA $0568      (Store 1 into $0568)
+C0/7FDC: 60      	    RTS

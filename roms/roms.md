@@ -1,0 +1,1 @@
+Place your FF6 ROM ending with .sfc or .smc here!

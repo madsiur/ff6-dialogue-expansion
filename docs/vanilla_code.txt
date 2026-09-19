@@ -1,0 +1,24 @@
+#############################
+# Dialogue Loading function #
+# FF3us 1.0 (original)      #
+#############################
+
+C0/7FBF: A9 CD    	    LDA #$CD       (Initial bank is CD)
+C0/7FC1: 85 CB    	    STA $CB        (This is kept in location $CB)
+C0/7FC3: C2 20    	    REP #$20       (16 bit accum./memory)
+C0/7FC5: A5 D0    	    LDA $D0        (Get dialog index)
+C0/7FC7: 0A      	    ASL A          (Times 2 since pointers are 2 bytes)
+C0/7FC8: AA      	    TAX            (This gives us the index X)
+C0/7FC9: BF 02 E6 CC	LDA $CCE602,X  (Loads pointer to dialogue X)
+C0/7FCD: 85 C9    	    STA $C9        (The pointer goes in $C9)
+C0/7FCF: A5 D0    	    LDA $D0        (Which dialogue is this?)
+C0/7FD1: CF 00 E6 CC	CMP $CCE600    (Checks to see whether bank byte needs is right or needs to be CE)
+C0/7FD5: 90 05    	    BCC $7FDC      (Branch if less to the pointer above)
+C0/7FD7: 7B      	    TDC            (Bank byte needs to be incremented, and this is pointless...)
+C0/7FD8: E2 20    	    SEP #$20       (8 bit accum./memory)
+C0/7FDA: E6 CB    	    INC $CB        (Since it wasn't less, we increment the bank byte)
+C0/7FDC: 7B      	    TDC            (Either way it is correct now, so clear the accumulator)
+C0/7FDD: E2 20    	    SEP #$20       (8 bit accum./memory)
+C0/7FDF: A9 01    	    LDA #$01       (Put a 1 in the accumulator)
+C0/7FE1: 8D 68 05  	    STA $0568      (Store 1 into $0568)
+C0/7FE4: 60      	    RTS

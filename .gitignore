@@ -1,0 +1,5 @@
+.devcontainer
+tools
+abcde
+*.smc
+*.sfc
