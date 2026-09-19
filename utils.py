@@ -64,3 +64,13 @@ def write_text_file(text: list, filename: str):
             f.write("".join(text))
     except OSError as e:
         raise OSError(f"An OSError occurred while writing {filename}: {e}") from e
+
+
+def confirm(prompt: str) -> bool:
+    while True:
+        answer = input(f"{prompt} [y/N]: ").strip().lower()
+        if answer in ("y", "yes"):
+            return True
+        if answer in ("n", "no", ""):
+            return False
+        print("Please enter y or n.")

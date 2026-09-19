@@ -21,6 +21,7 @@ FF3USME_DLG_START = 0
 FF3USME_DLG_END = 0
 NUM_POINTERS = 0
 NEW_DLG_END = 0
+APPROX_DLG_SIZE = 0
 
 
 def write_asm_hack(rom: bytearray):
@@ -49,10 +50,6 @@ def move_vanilla_dialogs(rom: bytearray):
     dlg_start = rutl.hirom_to_abs(DLG_START)
     dlg_end = rutl.hirom_to_abs(DLG_END)
     new_dlg_start = rutl.hirom_to_abs(NEW_DLG_START)
-    dlg_size = dlg_end + 1 - dlg_start
-    # print(f"{dlg_size:06X}")
-    if new_dlg_start > (len(rom) - dlg_size):
-        raise ValueError("New dialog range exceeds ROM end!")
 
     data_to_move = rom[dlg_start : dlg_end + 1]
     rom[new_dlg_start : new_dlg_start + len(data_to_move)] = data_to_move
@@ -66,10 +63,6 @@ def move_ff3usme_dialogs(rom: bytearray):
     ff3usme_dlg_start = rutl.hirom_to_abs(FF3USME_DLG_START)
     ff3usme_dlg_end = rutl.hirom_to_abs(FF3USME_DLG_END)
     new_dlg_start = rutl.hirom_to_abs(NEW_DLG_START)
-    dlg_size = dlg_end + 1 - dlg_start
-    ff3usme_dlg_size = ff3usme_dlg_end + 1 - ff3usme_dlg_start
-    if new_dlg_start > (len(rom) - dlg_size + ff3usme_dlg_size):
-        raise ValueError("New dialog range exceeds ROM end!")
 
     vanilla_data_to_move = rom[dlg_start : dlg_end + 1]
     new_dlg_end = new_dlg_start + len(vanilla_data_to_move)
@@ -222,6 +215,16 @@ def print_confirmation(rom_name: str, dump_name: str):
     print(f"Wrote {rom_name}")
 
 
+def expand_rom(rom: bytearray):
+    new_dlg_start = rutl.hirom_to_abs(NEW_DLG_START)
+    if len(rom) < new_dlg_start + APPROX_DLG_SIZE:
+        if utl.confirm("Inssuficent ROM space! Expand ROM to 4MiB?"):
+            rutl.expand_rom(rom)
+            return True
+        return False
+    return True
+
+
 def get_json_vars(json_data: dict):
     global \
         LAST_CD_INDEX, \
@@ -235,7 +238,8 @@ def get_json_vars(json_data: dict):
         FF3SUME_LAST_CD_OFFSET, \
         FF3SUME_LAST_CE_OFFSET, \
         FF3USME_DLG_START, \
-        FF3USME_DLG_END
+        FF3USME_DLG_END, \
+        APPROX_DLG_SIZE
 
     LAST_CD_INDEX = utl.get_hex_dict_entry(json_data, "last_bank_cd_dialog_index")
     DLG_PTR_START = utl.get_hex_dict_entry(json_data, "dialog_ptr_start")
@@ -255,6 +259,8 @@ def get_json_vars(json_data: dict):
     FF3USME_DLG_START = utl.get_hex_dict_entry(json_data, "ff3usme_dialog_start")
     FF3USME_DLG_END = utl.get_hex_dict_entry(json_data, "ff3usme_dialog_end")
 
+    APPROX_DLG_SIZE = 0x30000 if FF3USME_EXP else 0x20000
+
 
 if __name__ == "__main__":
     roms_dir = "roms"
@@ -271,28 +277,31 @@ if __name__ == "__main__":
         rom = utl.read_bin_file(file)
         had_header = rutl.trim_header(rom)
 
-        write_asm_hack(rom)
+        if expand_rom(rom):
+            write_asm_hack(rom)
 
-        if FF3USME_EXP:
-            move_ff3usme_dialogs(rom)
-            expand_ff3usme_pointers(rom)
+            if FF3USME_EXP:
+                move_ff3usme_dialogs(rom)
+                expand_ff3usme_pointers(rom)
+            else:
+                move_vanilla_dialogs(rom)
+                expand_vanilla_pointers(rom)
+
+            os.makedirs(output_dir, exist_ok=True)
+
+            dump_header = write_dump_header()
+            dump = dump_dialogues(rom, dump_header)
+            dump_file = os.path.join(output_dir, f"{filename}-dump.txt")
+            utl.write_text_file(dump, dump_file)
+
+            if had_header:
+                rutl.add_header(rom)
+
+            rom_file = os.path.join(output_dir, f"{filename}-dpe{extension}")
+            utl.write_bin_file(rom, rom_file)
+            print_confirmation(rom_file, dump_file)
         else:
-            move_vanilla_dialogs(rom)
-            expand_vanilla_pointers(rom)
-
-        os.makedirs(output_dir, exist_ok=True)
-
-        dump_header = write_dump_header()
-        dump = dump_dialogues(rom, dump_header)
-        dump_file = os.path.join(output_dir, f"{filename}-dump.txt")
-        utl.write_text_file(dump, dump_file)
-
-        if had_header:
-            rutl.add_header(rom)
-
-        rom_file = os.path.join(output_dir, f"{filename}-dpe{extension}")
-        utl.write_bin_file(rom, rom_file)
-        print_confirmation(rom_file, dump_file)
+            print("Program stopped")
 
     else:
-        print("No ROM file provided in the 'roms' folder!")
+        print(f"No ROM file provided in the '{roms_dir}' folder!")

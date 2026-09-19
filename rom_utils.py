@@ -50,6 +50,11 @@ def hirom_to_abs(value: int) -> int:
     return value
 
 
+def expand_rom(data: bytearray, size: int = 0x400000):
+    if len(data) < size:
+        data.extend(b"\x00" * (size - len(data)))
+
+
 def validate_byte(value: int):
     if value < 0 or value > 0xFF:
         raise ValueError(f"Byte value {value} is smaller than 0x00 or bigger than 0xFF")
