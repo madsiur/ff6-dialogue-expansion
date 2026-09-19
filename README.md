@@ -1,32 +1,53 @@
 # FF6DPE
 
-FF6DPE (short for ff6-dialogue-pointer-expansion) is a small python utility that expand to three bytes and relocate dialogue pointers as well as the dialogue script in other to allow more pointers and more dialogue space than the current FF3usME dialogue expansion.
+FF6DPE (short for ff6-dialogue-pointer-expansion) is a small python utility that expand to three bytes and relocate dialogue pointers as well as the dialogue script in other to allow more pointers and more dialogue space what the current FF3usME dialogue expansion allows.
 
-It also generate an abcde-compatible Atlas script that can be edited and then reinserted in the ROM via command line.
+It also generate an abcde-compatible script that can be edited and then reinserted in the ROM via command line.
 
 ## Usage
 
-First place your FF3us ROM in the `roms` folder. Then edit `definition.json`. If you ever only used FF3usME there are only three things you should touch in this file. The rest was just to more or less to avoid too much hardcoding:
+First place your FF3us 1.0 or FF3us 1.1 ROM in the `roms` folder. Then edit `definition.json` if needed. If you ever only used FF3usME for dialogues there are only three settings you should touch in this file. The rest of the setting entries are there just to more or less to avoid too much hardcoding:
 
-1. ff3usme_expansion: Set to `true` if you use FF3usME town dialogue expansion.
-2. new_dialog_start: Where in your ROM you want dialogues moved (HiROM notation, beginning of a bank)
-3. new_dialog_ptr_start: Where in your ROM you want dialogue pointers (HiROM notation)
+1. `ff3usme_expansion`: Set to `True` if you currently use FF3usME town dialogue expansion.
+2. `new_dialog_start`: Bank where you want dialogues to start. (HiROM notation)
+3. `new_dialog_ptr_start`: ROM offset where you want dialogue pointers to start. (HiROM notation)
 
-Note: As it is, `definition.json` will move dialogues to `$F30000` and keep pointers at the same place, overflowing a bit on the old dialogues place.
+Note: As it is, `definition.json` will move dialogues to `$F30000` and keep pointers more or less at the same place, overflowing a bit on the old dialogues place.
 
-Finally run FF6DPE with the command `python ff6dpe.py`. The output will be a ROM with the name `rom-name-dpe.{sfc/smc}` in the `roms` folder and the atlas-compatible dialogue dump named `dialogue-dump.txt` in the root folder (same level as `ff6dpe.py`).
+Finally run FF6DPE with the command `python ff6dpe.py`. The output will be a ROM with the name `rom-name-dpe.{sfc/smc}` in the `output` folder and the atlas-compatible dialogue dump named `rom-name-dump.txt` in the `output` folder as well.
 
-If you see no error it means everything went well!
+Note that if you place your dialogues or dialogue pointers in expanded space and your ROM is not expanded, you will be ask if you want FF6DPE to expand the ROM to 4MiB.
 
 ## abcde usage
 
-abcde's Atlas functionality is what is used to insert `dialogue-dump.txt` in the new ROM. Download abcde from [RHDI](https://romhack.ing/database/content/entry/FdNw5JQBNs8FWu0CRI_v/abcde) or [RHDN](https://www.romhacking.net/utilities/1392/). 
+abcde's Atlas functionality is what is used to insert `rom-name-dump.txt` in the new ROM. Download abcde from [RHDI](https://romhack.ing/database/content/entry/FdNw5JQBNs8FWu0CRI_v/abcde) or [RHDN](https://www.romhacking.net/utilities/1392/). 
 
-At the root of abcde folder, create a folder (e.g. `ff6`). In that folder, place `table.tbl`, `dialogue-dump.txt` and your new ROM (`rom-name-dpe.{sfc/smc}`). In that folder run the following command:
+At the root of abcde folder, create a folder (e.g. `ff6`). In that folder, place `table.tbl`, `rom-name-dump.txt` and your new ROM (`rom-name-dpe.{sfc/smc}`). In that folder run the following command:
 
 `perl ../abcde.pl -cm abcde::Atlas rom-name-dpe.smc dialogue-dump.txt`
 
-This will insert the text in the new ROM. You can freely edit in any (correct) way `dialogue-dump.txt` and re-run abcde.
+This will insert the text in the new ROM. You can freely edit in any (correct) way `rom-name-dump.txt` and re-run abcde.
+
+## Assembly hack
+
+This is the assembly hack that FF6DPE does in order to use expanded pointers:
+```
+C0/7FBF: C2 20    	    REP #$20       (16 bit accum./memory)
+C0/7FC1: A5 D0    	    LDA $D0        (Get dialog index)
+C0/7FC3: 0A      	    ASL A          (Times 2)
+C0/7FC4: 18             CLC            (Clear carry flag)
+C0/7FC5: 65 D0          ADC $D0        (Times 3 since pointers are 3 bytes)
+C0/7FC7: AA      	    TAX            (This gives us the index X)
+C0/7FC8: BF 00 E6 CC	LDA $CCE600,X  (Loads pointer to dialogue X low bytes)
+C0/7FCC: 85 C9    	    STA $C9        (The pointer low bytes goes in $C9)
+C0/7FCE: 7B      	    TDC            (Clear accumulator)
+C0/7FCF: E2 20          SEP #$20       (8 bit accum./memory)
+C0/7FD1: BF 02 E6 CC	LDA $CCE602,X  (Loads pointer to dialogue X bank byte)
+C0/7FD5: 85 CB    	    STA $CB        (The pointer bank byte goes in $CB)
+C0/7FD7: A9 01    	    LDA #$01       (Put a 1 in the accumulator)
+C0/7FD9: 8D 68 05  	    STA $0568      (Store 1 into $0568)
+C0/7FDC: 60      	    RTS
+```
 
 ## Notes
 
@@ -36,7 +57,7 @@ This will insert the text in the new ROM. You can freely edit in any (correct) w
 ## TODO
 
 - Remove print() statements in the code.
-- Add automatic ROM expansion code if expansion needed.
+- Validate all `definition.json` offsets.
 - Add FF6DE usage flag functionality.
 - Make a chart explaining `table.tbl` special opcodes.
 - Detail all `definition.json` settings in the readme.
