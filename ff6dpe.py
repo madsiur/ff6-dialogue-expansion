@@ -233,7 +233,7 @@ def get_json_vars(json_data: dict):
     DLG_START = utl.get_hex_dict_entry(json_data, "dialog_start")
     DLG_END = utl.get_hex_dict_entry(json_data, "dialog_end")
     NEW_DLG_PTR_START = utl.get_hex_dict_entry(json_data, "new_dialog_ptr_start")
-    NEW_DLG_START = utl.get_hex_dict_entry(json_data, "new_dialog_start")
+    NEW_DLG_START = utl.get_hex_dict_entry(json_data, "new_dialog_start_bank") << 16
 
     FF3USME_EXP = utl.get_bool_dict_entry(json_data, "ff3usme_expansion")
     FF3SUME_LAST_CD_OFFSET = utl.get_hex_dict_entry(
@@ -273,5 +273,6 @@ if __name__ == "__main__":
         extension = Path(file).suffix
         new_file = os.path.join("roms", f"{filename}-dpe{extension}")
         utl.write_bin_file(rom, new_file)
+
     else:
         print("No ROM file provided in the 'roms' folder!")

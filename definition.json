@@ -1,6 +1,6 @@
 {
     "new_dialog_ptr_start": "0xCCE600",
-    "new_dialog_start": "0xF30000",
+    "new_dialog_start_bank": "0xF3",
     "ff3usme_expansion": false,
     "last_bank_cd_dialog_index": "0xCCE600",
     "dialog_ptr_start": "0xCCE602",

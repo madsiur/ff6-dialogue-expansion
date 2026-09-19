@@ -22,7 +22,11 @@ If you see no error it means everything went well!
 
 abcde's Atlas functionality is what is used to insert `dialogue-dump.txt` in the new ROM. Download abcde from [RHDI](https://romhack.ing/database/content/entry/FdNw5JQBNs8FWu0CRI_v/abcde) or [RHDN](https://www.romhacking.net/utilities/1392/). 
 
-At the root of abcde folder, create a folder (e.g. `ff6`). In that folder, place `table.tbl`, `dialogue-dump.txt` and your new ROM (`rom-name-dpe.{sfc/smc}`). In that folder run the command `perl ../abcde.pl -cm abcde::Atlas rom-name-dpe.smc dialogue-dump.txt`. This will insert the text in the new ROM. You can freely edit in any (correct) way `dialogue-dump.txt` and re-run abcde.
+At the root of abcde folder, create a folder (e.g. `ff6`). In that folder, place `table.tbl`, `dialogue-dump.txt` and your new ROM (`rom-name-dpe.{sfc/smc}`). In that folder run the following command:
+
+`perl ../abcde.pl -cm abcde::Atlas rom-name-dpe.smc dialogue-dump.txt`
+
+This will insert the text in the new ROM. You can freely edit in any (correct) way `dialogue-dump.txt` and re-run abcde.
 
 ## Notes
 
@@ -31,7 +35,6 @@ At the root of abcde folder, create a folder (e.g. `ff6`). In that folder, place
 
 ## TODO
 
-- Change `new_dialog_start` setting to be a bank only instead of a full offset.
 - Remove print() statements in the code.
 - Add automatic ROM expansion code if expansion needed.
 - Add FF6DE usage flag functionality.
