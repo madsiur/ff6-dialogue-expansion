@@ -2,10 +2,10 @@ import glob
 import os
 from pathlib import Path
 
-import romutils as rutl
+import rom_utils as rutl
 import utils as utl
-from dialogueentry import DialogueEntry, load_table
-from hackwriter import HackWriter
+from dialogue_entry import DialogueEntry, load_table
+from hack_writer import HackWriter
 
 LAST_CD_INDEX = 0
 DLG_PTR_START = 0
