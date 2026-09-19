@@ -256,7 +256,7 @@ if __name__ == "__main__":
         file = min(files)
         # print(file)
         rom = utl.read_bin_file(file)
-        rutl.trim_header(rom)
+        had_header = rutl.trim_header(rom)
         write_asm_hack(rom)
 
         if FF3USME_EXP:
@@ -268,6 +268,9 @@ if __name__ == "__main__":
 
         dump_header = write_dump_header()
         dump_dialogues(rom, dump_header)
+
+        if had_header:
+            rutl.add_header(rom)
 
         filename = Path(file).stem
         extension = Path(file).suffix
