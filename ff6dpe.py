@@ -193,7 +193,7 @@ def dump_dialogues(rom: bytearray, dump_header: list):
         output.append("#WRITE(PtrTable)\n")
         output.append(f"{dlg_entry.string}\n\n")
 
-    utl.write_text_file(output, "dialogue-dump.txt")
+    return output
 
 
 def write_dump_header() -> list:
@@ -212,14 +212,14 @@ def write_dump_header() -> list:
     return header
 
 
-def print_confirmation(file_name: str):
+def print_confirmation(rom_name: str, dump_name: str):
     new_dlg_ptr_end = NEW_DLG_PTR_START + (NUM_POINTERS * 3) - 1
     print(
         f"Dialogues pointers are now from ${NEW_DLG_PTR_START:06X} to ${new_dlg_ptr_end:06X}"
     )
     print(f"Dialogues are not at ${NEW_DLG_START:06X}")
-    print("Wrote dialogue-dump.txt")
-    print(f"Wrote {file_name}")
+    print(f"Wrote {dump_name}")
+    print(f"Wrote {rom_name}")
 
 
 def get_json_vars(json_data: dict):
@@ -257,16 +257,20 @@ def get_json_vars(json_data: dict):
 
 
 if __name__ == "__main__":
+    roms_dir = "roms"
+    output_dir = "output"
     json_data = utl.read_json("definition.json")
     get_json_vars(json_data)
 
-    files = glob.glob("roms/*.sfc") + glob.glob("roms/*.smc")
+    files = glob.glob(f"{roms_dir}/*.sfc") + glob.glob(f"{roms_dir}/*.smc")
 
     if files:
         file = min(files)
-        # print(file)
+        filename = Path(file).stem
+        extension = Path(file).suffix
         rom = utl.read_bin_file(file)
         had_header = rutl.trim_header(rom)
+
         write_asm_hack(rom)
 
         if FF3USME_EXP:
@@ -276,17 +280,19 @@ if __name__ == "__main__":
             move_vanilla_dialogs(rom)
             expand_vanilla_pointers(rom)
 
+        os.makedirs(output_dir, exist_ok=True)
+
         dump_header = write_dump_header()
-        dump_dialogues(rom, dump_header)
+        dump = dump_dialogues(rom, dump_header)
+        dump_file = os.path.join(output_dir, f"{filename}-dump.txt")
+        utl.write_text_file(dump, dump_file)
 
         if had_header:
             rutl.add_header(rom)
 
-        filename = Path(file).stem
-        extension = Path(file).suffix
-        new_file = os.path.join("roms", f"{filename}-dpe{extension}")
-        utl.write_bin_file(rom, new_file)
-        print_confirmation(new_file)
+        rom_file = os.path.join(output_dir, f"{filename}-dpe{extension}")
+        utl.write_bin_file(rom, rom_file)
+        print_confirmation(rom_file, dump_file)
 
     else:
         print("No ROM file provided in the 'roms' folder!")

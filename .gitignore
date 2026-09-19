@@ -1,6 +1,6 @@
 .devcontainer
 tools
 abcde
-dialogue-dump.txt
+output
 *.smc
 *.sfc
