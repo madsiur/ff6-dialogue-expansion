@@ -34,8 +34,8 @@ def set_long(data: bytearray, offset: int, value: int):
 
 
 def trim_header(data: bytearray):
-    if len(data) % 0x200 != 0:
-        data = data[0x200:]
+    if len(data) % 0x80000 == 0x200:
+        del data[:0x200]
 
 
 def hirom_to_abs(value: int) -> int:
