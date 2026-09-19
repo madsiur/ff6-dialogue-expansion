@@ -253,7 +253,7 @@ if __name__ == "__main__":
     files = glob.glob("roms/*.sfc") + glob.glob("roms/*.smc")
 
     if files:
-        file = sorted(files)[0]
+        file = min(files)
         # print(file)
         rom = utl.read_bin_file(file)
         rutl.trim_header(rom)
