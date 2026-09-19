@@ -212,6 +212,16 @@ def write_dump_header() -> list:
     return header
 
 
+def print_confirmation(file_name: str):
+    new_dlg_ptr_end = NEW_DLG_PTR_START + (NUM_POINTERS * 3) - 1
+    print(
+        f"Dialogues pointers are now from ${NEW_DLG_PTR_START:06X} to ${new_dlg_ptr_end:06X}"
+    )
+    print(f"Dialogues are not at ${NEW_DLG_START:06X}")
+    print("Wrote dialogue-dump.txt")
+    print(f"Wrote {file_name}")
+
+
 def get_json_vars(json_data: dict):
     global \
         LAST_CD_INDEX, \
@@ -276,6 +286,7 @@ if __name__ == "__main__":
         extension = Path(file).suffix
         new_file = os.path.join("roms", f"{filename}-dpe{extension}")
         utl.write_bin_file(rom, new_file)
+        print_confirmation(new_file)
 
     else:
         print("No ROM file provided in the 'roms' folder!")
