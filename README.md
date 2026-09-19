@@ -6,13 +6,13 @@ It also generate an abcde-compatible script that can be edited and then reinsert
 
 ## Usage
 
-First place your FF3us 1.0 or FF3us 1.1 ROM in the `roms` folder. Then edit `definition.json` if needed. If you ever only used FF3usME for dialogues there are only three settings you should touch in this file. The rest of the setting entries are there just to more or less to avoid too much hardcoding:
+First place your FF3us 1.0 or FF3us 1.1 ROM in the `roms` folder. Then edit `definition.json` if needed. If you ever only used FF3usME for dialogues there are only three settings you should touch in this file. The rest of the setting entries are there more or less to avoid too much hardcoding:
 
 1. `ff3usme_expansion`: Set to `True` if you currently use FF3usME town dialogue expansion.
 2. `new_dialog_start`: Bank where you want dialogues to start. (HiROM notation)
 3. `new_dialog_ptr_start`: ROM offset where you want dialogue pointers to start. (HiROM notation)
 
-Note: As it is, `definition.json` will move dialogues to `$F30000` and keep pointers more or less at the same place, overflowing a bit on the old dialogues place.
+Note: By default, `definition.json` will move dialogues to `$F30000` and keep pointers more or less at the same place, overflowing a bit on the old dialogues place.
 
 Finally run FF6DPE with the command `python ff6dpe.py`. The output will be a ROM with the name `rom-name-dpe.{sfc/smc}` in the `output` folder and the atlas-compatible dialogue dump named `rom-name-dump.txt` in the `output` folder as well.
 
@@ -20,7 +20,7 @@ Note that if you place your dialogues or dialogue pointers in expanded space and
 
 ## abcde usage
 
-abcde's Atlas functionality is what is used to insert `rom-name-dump.txt` in the new ROM. Download abcde from [RHDI](https://romhack.ing/database/content/entry/FdNw5JQBNs8FWu0CRI_v/abcde) or [RHDN](https://www.romhacking.net/utilities/1392/). 
+abcde's Atlas module is what is used to insert `rom-name-dump.txt` in the new ROM. Download abcde from [RHDI](https://romhack.ing/database/content/entry/FdNw5JQBNs8FWu0CRI_v/abcde) or [RHDN](https://www.romhacking.net/utilities/1392/).
 
 At the root of abcde folder, create a folder (e.g. `ff6`). In that folder, place `table.tbl`, `rom-name-dump.txt` and your new ROM (`rom-name-dpe.{sfc/smc}`). In that folder run the following command:
 
