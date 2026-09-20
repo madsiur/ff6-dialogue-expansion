@@ -5,7 +5,13 @@ from pathlib import Path
 
 import rom_utils as rutl
 import utils as utl
-from dialogue_entry import DialogueEntry, build_dte, load_table, save_table
+from dialogue_entry import (
+    DialogueEntry,
+    build_dte,
+    build_word_count,
+    load_table,
+    save_table,
+)
 from hack_writer import HackWriter
 
 LAST_CD_INDEX = 0
@@ -24,23 +30,26 @@ NUM_POINTERS = 0
 NEW_DLG_END = 0
 DTE_TABLE = 0
 APPROX_DLG_SIZE = 0
+KEYWORD_TABLE = 0
 
 
-def is_dte_optimization():
+def check_args() -> str:
     i = 1
     while i < len(sys.argv):
         arg = sys.argv[i]
         i += 1
         if arg == "-dte":
-            return True
+            return "dte"
+        elif arg == "-words":
+            return "words"
         else:
             if not os.path.exists(arg):
                 print(f"Error: '{arg}' not found")
                 sys.exit(1)
-    return False
+    return ""
 
 
-def write_asm_hack(rom: bytearray):
+def write_dialogue_asm_hack(rom: bytearray):
     hw = HackWriter(rom, 0x007FBF)
     hw.write_bytes(0xC2, 0x20)
     hw.write_bytes(0xA5, 0xD0)
@@ -59,6 +68,12 @@ def write_asm_hack(rom: bytearray):
     hw.write_bytes(0xA9, 0x01)
     hw.write_bytes(0x8D, 0x68, 0x05)
     hw.write_bytes(0x60)
+
+
+def write_keyword_asm_hack(rom: bytearray) -> int:
+    offset = rutl.hirom_to_abs(KEYWORD_TABLE)
+    hw = HackWriter(rom, offset)
+    return hw.offset
 
 
 def move_vanilla_dialogs(rom: bytearray):
@@ -290,6 +305,17 @@ def optimize_table(
     return table
 
 
+def add_keywords_to_table(
+    table: dict[int, tuple[str, int]], keywords: dict[int, list[int]]
+) -> dict[int, tuple[str, int]]:
+    for keyword_id, keyword in keywords.items():
+        word = ""
+        for id in range(len(keyword)):
+            word += table[keyword[id]][0]
+        table[0x1700 + keyword_id] = (word, 0)
+    return table
+
+
 def write_dte_to_rom(rom: bytearray, dte: dict[int, tuple[int, int]]):
     dte_offset = rutl.hirom_to_abs(DTE_TABLE)
     for dte_id, bigram in dte.items():
@@ -313,7 +339,8 @@ def get_json_vars(json_data: dict):
         FF3USME_DLG_START, \
         FF3USME_DLG_END, \
         APPROX_DLG_SIZE, \
-        DTE_TABLE
+        DTE_TABLE, \
+        KEYWORD_TABLE
 
     LAST_CD_INDEX = utl.get_hex_dict_entry(json_data, "last_bank_cd_dialog_index")
     DLG_PTR_START = utl.get_hex_dict_entry(json_data, "dialog_ptr_start")
@@ -333,6 +360,7 @@ def get_json_vars(json_data: dict):
     FF3USME_DLG_START = utl.get_hex_dict_entry(json_data, "ff3usme_dialog_start")
     FF3USME_DLG_END = utl.get_hex_dict_entry(json_data, "ff3usme_dialog_end")
     DTE_TABLE = utl.get_hex_dict_entry(json_data, "dte_table")
+    KEYWORD_TABLE = utl.get_hex_dict_entry(json_data, "keyword_table")
 
     APPROX_DLG_SIZE = 0x30000 if FF3USME_EXP else 0x20000
 
@@ -352,14 +380,21 @@ if __name__ == "__main__":
         rom = utl.read_bin_file(file)
         had_header = rutl.trim_header(rom)
 
-        dte_optimization = is_dte_optimization()
-
-        if dte_optimization:
+        args = check_args()
+        if args == "words":
+            table = load_table("table.tbl")
+            dlg_entries = dump_dialogues_dte(rom, table)
+            words = build_word_count(dlg_entries)
+            asm_hack_offset = write_keyword_asm_hack(rom)
+            new_table = add_keywords_to_table(table, words)
+            table_file = os.path.join(output_dir, f"{filename}-table-keyword.tbl")
+            save_table(new_table, table_file)
+        elif args == "dte":
             table = load_table("table.tbl")
             dlg_entries = dump_dialogues_dte(rom, table)
             dte = build_dte(dlg_entries)
             new_table = optimize_table(table, dte)
-            table_file = os.path.join(output_dir, f"{filename}-table.tbl")
+            table_file = os.path.join(output_dir, f"{filename}-table-dte.tbl")
             save_table(new_table, table_file)
             write_dte_to_rom(rom, dte)
             rom_file = os.path.join(output_dir, f"{filename}-dte{extension}")
@@ -368,7 +403,7 @@ if __name__ == "__main__":
             print(f"Wrote {rom_file}")
         else:
             if expand_rom(rom):
-                write_asm_hack(rom)
+                write_dialogue_asm_hack(rom)
 
                 if FF3USME_EXP:
                     move_ff3usme_dialogs(rom)
@@ -378,7 +413,6 @@ if __name__ == "__main__":
                     expand_vanilla_pointers(rom)
 
                 os.makedirs(output_dir, exist_ok=True)
-
                 dump_header = write_dump_header()
                 table = load_table("table.tbl")
                 dlg_entries = dump_dialogues(rom, table)

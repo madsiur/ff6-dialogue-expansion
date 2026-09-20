@@ -12,5 +12,6 @@
     "ff3usme_last_bank_cd_dialog_index": "0xC0DF80",
     "ff3usme_last_bank_ce_dialog_index": "0xC0DF83",
     "ff3de_expansion": false,
-    "dte_table": "0xC0DFA0"
+    "dte_table": "0xC0DFA0",
+    "keyword_table": "0xCD8000"
 }

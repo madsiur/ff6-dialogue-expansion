@@ -73,11 +73,9 @@ class DialogueEntry:
                 i += 1
                 if opcode >= 0x80:
                     dte_entry_offset = dte_start + (opcode - 0x80) * 2
-                    non_dte_char_1 = rom[dte_entry_offset]
-                    non_dte_char_2 = rom[dte_entry_offset + 1]
-                    data.append(non_dte_char_1)
-                    data.append(non_dte_char_2)
-                if extra > 0:
+                    data.append(rom[dte_entry_offset])
+                    data.append(rom[dte_entry_offset + 1])
+                elif extra > 0:
                     extra_bytes = rom[i : i + extra]
                     i += extra
                     data.append(opcode)
@@ -141,3 +139,32 @@ def build_dte(dlg_entries: list[DialogueEntry]) -> dict[int, tuple[int, int]]:
 
     ranked = counts.most_common(128)
     return {slot: bigram for slot, (bigram, _) in zip(range(0x80, 0x100), ranked)}
+
+
+def build_word_count(dlg_entries: list[DialogueEntry]) -> dict[int, list[int]]:
+    valid = set(range(0x20, 0x7F))
+    counts = Counter()
+
+    for dlg_entry in dlg_entries:
+        data = dlg_entry.no_dte_data
+        i = 0
+        while i < len(data):
+            word = []
+            j = 0
+            while i + j < len(data) and data[i + j] in valid:
+                word.append(data[i + j])
+                j += 1
+            if len(word) >= 3:
+                counts[tuple(word)] += 1
+            i += j if j > 0 else 1
+
+    ranked = sorted(
+        counts.items(), key=lambda item: (len(item[0]) - 2) * item[1], reverse=True
+    )[:256]
+    total_size = 0
+    for bigram, count in ranked:
+        size = (len(bigram) - 2) * count
+        total_size += size
+        print(f"({len(bigram) - 2} * {count} = {size}) {list(bigram)}")
+    print(f"total size: {total_size:06X}")
+    return {slot: list(bigram) for slot, (bigram, _) in zip(range(0x100), ranked)}
