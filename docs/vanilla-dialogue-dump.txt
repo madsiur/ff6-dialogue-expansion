@@ -10,38 +10,37 @@
 #PTRTBL(PtrTable, $0CE600, 3, Ptr)
 #HDR($0)
 
-// Dialogues are stored at $F30000
 #JMP($330000)
 
 // Caption #0
 #WRITE(PtrTable)
-VICKS: There's the town...[DE][OP18][OP12][EOP]
-WEDGE: Hard to believe an Esper's been found intact there, 1000 years after the War of the Magi...[DE][OP18][OP12][EOC]
+VICKS: There's the town...[DE]<$18>[OP12][EOP]
+WEDGE: Hard to believe an Esper's been found intact there, 1000 years after the War of the Magi...[DE]<$18>[OP12][EOC]
 
 // Caption #1
 #WRITE(PtrTable)
-VICKS: There's the town...[DE][OP18][OP12][EOP]
-WEDGE: Hard to believe an Esper's been found intact there, 1000 years after the War of the Magi...[DE][OP18][OP12][EOC]
+VICKS: There's the town...[DE]<$18>[OP12][EOP]
+WEDGE: Hard to believe an Esper's been found intact there, 1000 years after the War of the Magi...[DE]<$18>[OP12][EOC]
 
 // Caption #2
 #WRITE(PtrTable)
 VICKS: Think it's still alive?[L]
 WEDGE: Probably...[L]
-...judging from the urgency of our orders. [DE][OP18][OP12][EOC]
+...judging from the urgency of our orders. [DE]<$18>[OP12][EOC]
 
 // Caption #3
 #WRITE(PtrTable)
-VICKS: And this woman, this...sorcerer. Why's she here?[DE][OP18][OP12][EOP]
-I heard she fried 50 of our Magitek Armored soldiers in under 3 minutes.[DE][OP18][OP12][EOC]
+VICKS: And this woman, this...sorcerer. Why's she here?[DE]<$18>[OP12][EOP]
+I heard she fried 50 of our Magitek Armored soldiers in under 3 minutes.[DE]<$18>[OP12][EOC]
 
 // Caption #4
 #WRITE(PtrTable)
-WEDGE: Not to worry. The Slave Crown on her head robs her of all conscious thought. She'll follow orders.[DE][OP18][OP12][EOC]
+WEDGE: Not to worry. The Slave Crown on her head robs her of all conscious thought. She'll follow orders.[DE]<$18>[OP12][EOC]
 
 // Caption #5
 #WRITE(PtrTable)
 WEDGE: We'll approach from the east.[L]
-Move out![DE][A10][OP12][EOC]
+Move out![DE]<$0C>[OP12][EOC]
 
 // Caption #6
 #WRITE(PtrTable)
@@ -5926,8 +5925,7 @@ Is she safe? Is she waiting? [E]<$18>[OP12][EOC]
 [note] Oh [E]<$0A>Maria [E]<$10>[OP12][L]
    Oh [E]<$0A>Maria [E]<$0E>[OP12][L]
    Please, [E]<$0D>hear my [E]<$0D>voice! [E]<$17>[OP12][L]
-   How I long to [E]<$13>
-be with you! [note] [E]<$1D>[OP12][EOC]
+   How I long to [E]<$13>be with you! [note] [E]<$1D>[OP12][EOC]
 
 // Caption #1191
 #WRITE(PtrTable)
@@ -6029,7 +6027,7 @@ But she never stopped yearning for Draco... [E]<$10>[OP12][EOC]
 #WRITE(PtrTable)
 The next line is...?[L]
    [C](Oh my hero...)[L]
-   [C](Alas, Draco...)[DE][E]<$12>[EOC]
+   [C](Alas, Draco...)[DE]<$11>[OP12][EOC]
 
 // Caption #1210
 #WRITE(PtrTable)
@@ -6040,7 +6038,7 @@ The next line is...?[L]
    like night into day. [E]<$0C>[OP12][EOP]
 [note] It's just a fading dream... [note] [E]<$08>[OP12][L]
    [C](I wish I...)[L]
-   [C](I'm the darkness) [DE][A12][OP12][EOC]
+   [C](I'm the darkness) [DE]<$0E>[OP12][EOC]
 
 // Caption #1211
 #WRITE(PtrTable)
@@ -6062,7 +6060,7 @@ Something's wrong...eh?[L]
    for me there can be, [E]<$0C>[OP12][EOP]
 [note] only you, my chosen one... [note] [E]<$08>[OP12][L]
    [C](Must I...)[L]
-   [C](Prince Ralse...)[DE][A8][OP12][EOC]
+   [C](Prince Ralse...)[DE]<$0A>[OP12][EOC]
 
 // Caption #1214
 #WRITE(PtrTable)
@@ -6096,8 +6094,7 @@ We messed up.[EOC]
    you up. [E]<$11>[OP12][EOP]
 [note] Ere I walk away, [E]<$0A>[L]
    let me hear you say. [E]<$0C>[OP12][L]
-   I meant as much to you... [note] [E]<$13>
-[OP12][EOC]
+   I meant as much to you... [note] [E]<$13>[OP12][EOC]
 
 // Caption #1219
 #WRITE(PtrTable)
@@ -6656,10 +6653,7 @@ Cid, the director of Magitek research, is a genius! He gave my child the gift of
 
 // Caption #1335
 #WRITE(PtrTable)
-Hey, YOU! [E]<$01>
-... [E]<$01>
-... [E]<$01>
-[L]
+Hey, YOU! [E]<$01>... [E]<$01>... [E]<$01>[L]
 You're Returners!![EOC]
 
 // Caption #1336
@@ -6784,11 +6778,7 @@ SOLDIER: Get outta here![EOC]
 // Caption #1361
 #WRITE(PtrTable)
 MAN: Urghh...[L]
-Gonna [E]<$01>
-toss [E]<$01>
-it [E]<$01>
-all... [E]<$01>
-[L]
+Gonna [E]<$01>toss [E]<$01>it [E]<$01>all... [E]<$01>[L]
 SOLDIER: Hey...[EOC]
 
 // Caption #1362
@@ -7852,8 +7842,7 @@ The Empire strings up anyone who opposes it.[EOC]
 
 // Caption #1574
 #WRITE(PtrTable)
-he town...[DE][OP18][OP12][EOP]
-WEDGE: Hard to believe an Esper's been found intact there, 1000 years after the War of the Magi...[DE][OP18][OP12][EOC]
+3 cheers for the Empire![EOC]
 
 // Caption #1575
 #WRITE(PtrTable)
@@ -11749,7 +11738,7 @@ SIGFRIED: Pretty dangerous from here on. I'll go in first and clear out all the 
 // Caption #2380
 #WRITE(PtrTable)
 [L]
-    On the hum, let's go!!!! [DE][A2][OP12][EOC]
+    On the hum, let's go!!!! [DE]<$04>[OP12][EOC]
 
 // Caption #2381
 #WRITE(PtrTable)
@@ -11951,7 +11940,7 @@ From the stone...?[EOC]
 
 // Caption #2418
 #WRITE(PtrTable)
-[S]<$0B>Atom Edge! [DE][A2][OP12][EOC]
+[S]<$0B>Atom Edge! [DE]<$04>[OP12][EOC]
 
 // Caption #2419
 #WRITE(PtrTable)
@@ -13490,7 +13479,7 @@ Won't you take the stone?![EOC]
 [L]
 [L]
 [S]<$07>Stay...away...[L]
-[DE][A4][OP12][EOC]
+[DE]<$06>[OP12][EOC]
 
 // Caption #2704
 #WRITE(PtrTable)
@@ -14683,10 +14672,7 @@ You've seen it, haven't you?[EOC]
 // Caption #2923
 #WRITE(PtrTable)
 Eh?......[L]
-Who [E]<$01>
-might [E]<$01>
-you [E]<$01>
-be?[EOC]
+Who [E]<$01>might [E]<$01>you [E]<$01>be?[EOC]
 
 // Caption #2924
 #WRITE(PtrTable)
@@ -14872,7 +14858,7 @@ Hop aboard?[L]
 // Caption #2960
 #WRITE(PtrTable)
 [L]
-[S]<$05>Monster-in-a-box! [DE][A2][OP12][EOC]
+[S]<$05>Monster-in-a-box! [DE]<$04>[OP12][EOC]
 
 // Caption #2961
 #WRITE(PtrTable)
