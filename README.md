@@ -14,7 +14,7 @@ First place your FF3us 1.0 or FF3us 1.1 ROM in the `roms` folder. Then edit `def
 
 Note: By default, `definition.json` will move dialogues to `$F30000` and keep pointers more or less at the same place, overflowing a bit on the old dialogues place.
 
-Finally run FF6DPE with the command `python ff6dpe.py`. The output will be a ROM with the name `rom-name-dpe.{sfc/smc}` in the `output` folder and the atlas-compatible dialogue dump named `rom-name-dump.txt` in the `output` folder as well.
+Finally run FF6DPE with the command `python ff6dpe.py`. This command will take the first ROM in the `roms` folder and output a ROM with the name `rom-name-dpe.{sfc/smc}` in the `output` folder and the atlas-compatible dialogue dump named `rom-name-dump.txt` in the `output` folder as well.
 
 Note that if you place your dialogues or dialogue pointers in expanded space and your ROM is not expanded, you will be ask if you want FF6DPE to expand the ROM to 4MiB.
 
@@ -27,6 +27,14 @@ At the root of abcde folder, create a folder (e.g. `ff6`). In that folder, place
 `perl ../abcde.pl -cm abcde::Atlas rom-name-dpe.smc dialogue-dump.txt`
 
 This will insert the text in the new ROM. You can freely edit in any (correct) way `rom-name-dump.txt` and re-run abcde.
+
+## DTE optimization
+
+Once the base expansion is done, you can run `python ff6dpe.py -dte` to optimize the DTE table. This command will take the first ROM in the `roms` folder and generate a new ROM named `rom-name-dte.{sfc/smc}` and a new table named `rom-name-table.tbl`, both placed in the `output` folder.
+
+Note that for now, in order to complete this process, you must re-run abcde with your script, the new ROM and the new table. You script must have the correct table name at `#ADDTBL("table.tbl", dialogue)` so you can just rename the new table `table.tbl`.
+
+DTE optimization on the vanilla script saves about 0x130 bytes of dialogues.
 
 ## Assembly hack
 
@@ -56,7 +64,6 @@ C0/7FDC: 60      	    RTS
 
 ## TODO
 
-- Remove print() statements in the code.
 - Validate all `definition.json` offsets.
 - Add FF6DE usage flag functionality.
 - Make a chart explaining `table.tbl` special opcodes.

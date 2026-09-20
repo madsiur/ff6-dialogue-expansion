@@ -1,11 +1,14 @@
 from collections import Counter
 
+import rom_utils as rutl
+
 
 class DialogueEntry:
     def __init__(self, id: int):
         self.id = id
         self.string = ""
         self.data = []
+        self.no_dte_data = []
 
     def decode(self, rom: bytearray, ptr: int, dlg_end: int, table: dict):
         output = []
@@ -46,8 +49,49 @@ class DialogueEntry:
         self.string = "".join(output)
         self.data = data
 
+    def decode_no_dte(
+        self,
+        rom: bytearray,
+        ptr: int,
+        dlg_end: int,
+        dte_offset: int,
+        table: dict[int, tuple[str, int]],
+    ):
+        dte_start = rutl.hirom_to_abs(dte_offset)
+        data = []
+        i = ptr
+        while i < dlg_end:
+            if rom[i] == 0x00:
+                entry = table.get(rom[i])
+                if entry:
+                    data.append(rom[i])
+                break
+            entry = table.get(rom[i])
+            if entry:
+                extra = entry[1]
+                opcode = rom[i]
+                i += 1
+                if opcode >= 0x80:
+                    dte_entry_offset = dte_start + (opcode - 0x80) * 2
+                    non_dte_char_1 = rom[dte_entry_offset]
+                    non_dte_char_2 = rom[dte_entry_offset + 1]
+                    data.append(non_dte_char_1)
+                    data.append(non_dte_char_2)
+                if extra > 0:
+                    extra_bytes = rom[i : i + extra]
+                    i += extra
+                    data.append(opcode)
+                    data.extend(extra_bytes)
+                else:
+                    data.append(opcode)
+            else:
+                data.append(rom[i])
+                i += 1
 
-def load_table(filepath: str) -> dict:
+        self.no_dte_data = data
+
+
+def load_table(filepath: str) -> dict[int, tuple[str, int]]:
     table = {}
     with open(filepath) as f:
         for line in f:
@@ -90,9 +134,10 @@ def build_dte(dlg_entries: list[DialogueEntry]) -> dict[int, tuple[int, int]]:
     counts = Counter()
 
     for dlg_entry in dlg_entries:
-        for i in range(len(dlg_entry.data) - 1):
-            if dlg_entry.data[i] in valid and dlg_entry.data[i + 1] in valid:
-                counts[(dlg_entry.data[i], dlg_entry.data[i + 1])] += 1
+        data = dlg_entry.no_dte_data
+        for i in range(len(data) - 1):
+            if data[i] in valid and data[i + 1] in valid:
+                counts[(data[i], data[i + 1])] += 1
 
     ranked = counts.most_common(128)
     return {slot: bigram for slot, (bigram, _) in zip(range(0x80, 0x100), ranked)}

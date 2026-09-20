@@ -189,14 +189,6 @@ def expand_ff3usme_pointers(rom: bytearray):
 
 
 def dump_dialogues(rom: bytearray, table: dict[int, tuple[str, int]]) -> list:
-    global NUM_POINTERS, NEW_DLG_END
-
-    if NUM_POINTERS == 0:
-        NUM_POINTERS = get_num_pointers(rom)
-
-    if NEW_DLG_END == 0:
-        NEW_DLG_END = NEW_DLG_PTR_START + 0x300000
-
     dlg_entries = []
     new_dlg_ptr_start = rutl.hirom_to_abs(NEW_DLG_PTR_START)
     new_dlg_end = rutl.hirom_to_abs(NEW_DLG_END)
@@ -211,6 +203,32 @@ def dump_dialogues(rom: bytearray, table: dict[int, tuple[str, int]]) -> list:
             )
         dlg_entry = DialogueEntry(dlg_index)
         dlg_entry.decode(rom, ptr, new_dlg_end, table)
+        dlg_entries.append(dlg_entry)
+
+    return dlg_entries
+
+
+def dump_dialogues_dte(rom: bytearray, table: dict[int, tuple[str, int]]) -> list:
+    global NUM_POINTERS, NEW_DLG_END
+    NUM_POINTERS = get_num_pointers(rom)
+    last_ptr_offset = rutl.hirom_to_abs(NEW_DLG_PTR_START) + NUM_POINTERS * 3
+    last_ptr = rutl.get_long(rom, last_ptr_offset)
+    NEW_DLG_END = rutl.hirom_to_abs(last_ptr) + 0x500
+
+    dlg_entries = []
+    new_dlg_ptr_start = rutl.hirom_to_abs(NEW_DLG_PTR_START)
+    new_dlg_end = rutl.hirom_to_abs(NEW_DLG_END)
+    prev_ptr = 0
+
+    for dlg_index in range(NUM_POINTERS):
+        ptr_offset = new_dlg_ptr_start + (dlg_index * 3)
+        ptr = rutl.hirom_to_abs(rutl.get_long(rom, ptr_offset))
+        if ptr < prev_ptr:
+            raise ValueError(
+                f"dump_dialogues_dte() dialogue {dlg_index:04X} ptr ({ptr:06X}) is smaller than previous ptr ({prev_ptr:06X})"
+            )
+        dlg_entry = DialogueEntry(dlg_index)
+        dlg_entry.decode_no_dte(rom, ptr, new_dlg_end, DTE_TABLE, table)
         dlg_entries.append(dlg_entry)
 
     return dlg_entries
@@ -338,7 +356,7 @@ if __name__ == "__main__":
 
         if dte_optimization:
             table = load_table("table.tbl")
-            dlg_entries = dump_dialogues(rom, table)
+            dlg_entries = dump_dialogues_dte(rom, table)
             dte = build_dte(dlg_entries)
             new_table = optimize_table(table, dte)
             table_file = os.path.join(output_dir, f"{filename}-table.tbl")
