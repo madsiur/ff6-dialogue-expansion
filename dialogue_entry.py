@@ -73,11 +73,9 @@ class DialogueEntry:
                 i += 1
                 if opcode >= 0x80:
                     dte_entry_offset = dte_start + (opcode - 0x80) * 2
-                    non_dte_char_1 = rom[dte_entry_offset]
-                    non_dte_char_2 = rom[dte_entry_offset + 1]
-                    data.append(non_dte_char_1)
-                    data.append(non_dte_char_2)
-                if extra > 0:
+                    data.append(rom[dte_entry_offset])
+                    data.append(rom[dte_entry_offset + 1])
+                elif extra > 0:
                     extra_bytes = rom[i : i + extra]
                     i += extra
                     data.append(opcode)
