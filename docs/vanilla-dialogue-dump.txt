@@ -1,6 +1,3 @@
-// This is the vanilla dialogue dump extracted with ff6dpe.py.
-// It is compatible with abcde's Atlas insertion tool using table.tbl.
-
 #VAR(dialogue, TABLE)
 #ADDTBL("table.tbl", dialogue)
 #ACTIVETBL(dialogue)

@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 class DialogueEntry:
     def __init__(self, id: int):
         self.id = id
@@ -19,6 +22,7 @@ class DialogueEntry:
             entry = table.get(rom[i])
             if entry:
                 label, extra = entry
+                opcode = rom[i]
                 i += 1
                 if extra > 0:
                     if label.startswith("<") and label.endswith(">"):
@@ -27,12 +31,12 @@ class DialogueEntry:
                     i += extra
                     extra_hex = " ".join(f"<${b:02X}>" for b in extra_bytes)
                     output.append(f"{label}{extra_hex}")
-                    data.append(rom[i])
-                    data.append(extra_bytes)
+                    data.append(opcode)
+                    data.extend(extra_bytes)
                 else:
                     output.append(label)
-                    data.append(rom[i])
-                if rom[i - 1] == 0x01 or rom[i - 1] == 0x13:
+                    data.append(opcode)
+                if opcode == 0x01 or opcode == 0x13:
                     output.append("\n")
             else:
                 output.append(f"<${rom[i]:02X}>")
@@ -67,5 +71,28 @@ def load_table(filepath: str) -> dict:
                 extra_bytes = 0
 
             table[key] = (label, extra_bytes)
-            # print(f"key: {key}")
     return table
+
+
+def save_table(table: dict[int, tuple[str, int]], filepath: str):
+    with open(filepath, "w") as f:
+        for key in sorted(table):
+            label, extra_bytes = table[key]
+            hex_part = f"{key:02X}"
+            if extra_bytes:
+                f.write(f"!{hex_part}={label},{extra_bytes}\n")
+            else:
+                f.write(f"{hex_part}={label}\n")
+
+
+def build_dte(dlg_entries: list[DialogueEntry]) -> dict[int, tuple[int, int]]:
+    valid = set(range(0x20, 0x80))
+    counts = Counter()
+
+    for dlg_entry in dlg_entries:
+        for i in range(len(dlg_entry.data) - 1):
+            if dlg_entry.data[i] in valid and dlg_entry.data[i + 1] in valid:
+                counts[(dlg_entry.data[i], dlg_entry.data[i + 1])] += 1
+
+    ranked = counts.most_common(128)
+    return {slot: bigram for slot, (bigram, _) in zip(range(0x80, 0x100), ranked)}

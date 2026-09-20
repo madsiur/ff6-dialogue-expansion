@@ -1,10 +1,11 @@
 import glob
 import os
+import sys
 from pathlib import Path
 
 import rom_utils as rutl
 import utils as utl
-from dialogue_entry import DialogueEntry, load_table
+from dialogue_entry import DialogueEntry, build_dte, load_table, save_table
 from hack_writer import HackWriter
 
 LAST_CD_INDEX = 0
@@ -21,7 +22,22 @@ FF3USME_DLG_START = 0
 FF3USME_DLG_END = 0
 NUM_POINTERS = 0
 NEW_DLG_END = 0
+DTE_TABLE = 0
 APPROX_DLG_SIZE = 0
+
+
+def is_dte_optimization():
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        i += 1
+        if arg == "-dte":
+            return True
+        else:
+            if not os.path.exists(arg):
+                print(f"Error: '{arg}' not found")
+                sys.exit(1)
+    return False
 
 
 def write_asm_hack(rom: bytearray):
@@ -88,6 +104,21 @@ def is_null_ptr_next(data: bytearray, id: int, null_value: int) -> bool:
     )
 
 
+def get_num_pointers(rom: bytearray) -> int:
+    num_pointers = 0
+    dlg_size_limit = 0x500
+    new_dlg_ptr_start = rutl.hirom_to_abs(NEW_DLG_PTR_START)
+    dlg_ptr_1 = rutl.get_long(rom, new_dlg_ptr_start)
+    new_dlg_ptr_start += 3
+    dlg_ptr_2 = rutl.get_long(rom, new_dlg_ptr_start)
+    while dlg_ptr_2 >= dlg_ptr_1 and dlg_ptr_1 + dlg_size_limit > dlg_ptr_2:
+        num_pointers += 1
+        dlg_ptr_1 = rutl.get_long(rom, new_dlg_ptr_start)
+        new_dlg_ptr_start += 3
+        dlg_ptr_2 = rutl.get_long(rom, new_dlg_ptr_start)
+    return num_pointers
+
+
 def expand_vanilla_pointers(rom: bytearray):
     global NUM_POINTERS
     dlg_ptr_start = rutl.hirom_to_abs(DLG_PTR_START)
@@ -103,12 +134,11 @@ def expand_vanilla_pointers(rom: bytearray):
         is_null_ff = is_null_ptr_next(old_pointers, ptr_id, 0xFF)
         if (dlg_index > last_cd_index) and (is_null_00 or is_null_ff):
             NUM_POINTERS = dlg_index
-            # print(f"Break (id: {dlg_index})")
             break
         new_ptr_offset = ptr_id + dlg_index + new_dlg_ptr_start
         rom[new_ptr_offset : new_ptr_offset + 2] = old_pointers[ptr_id : ptr_id + 2]
         rutl.set_byte(rom, new_ptr_offset + 2, new_dialog_bank)
-        if dlg_index == last_cd_index:
+        if dlg_index == last_cd_index - 1:
             new_dialog_bank += 1
 
     last_ptr = len(old_pointers) - 2
@@ -138,14 +168,13 @@ def expand_ff3usme_pointers(rom: bytearray):
         is_null_ff = is_null_ptr_next(old_pointers, ptr_id, 0xFF)
         if (dlg_index > last_ce_index) and (is_null_00 or is_null_ff):
             NUM_POINTERS = dlg_index
-            # print(f"Break (id: {dlg_index})")
             break
         new_ptr_offset = ptr_id + dlg_index + new_dlg_ptr_start
         rom[new_ptr_offset : new_ptr_offset + 2] = old_pointers[ptr_id : ptr_id + 2]
         rutl.set_byte(rom, new_ptr_offset + 2, new_dialog_bank)
-        if dlg_index == last_ce_index:
+        if dlg_index == last_ce_index - 1:
             new_dialog_bank += 1
-        if dlg_index == last_cd_index:
+        if dlg_index == last_cd_index - 1:
             new_dialog_bank += 1
 
     last_ptr = len(old_pointers) - 2
@@ -159,18 +188,23 @@ def expand_ff3usme_pointers(rom: bytearray):
         rutl.set_byte(rom, new_ptr_offset + 2, new_dialog_bank)
 
 
-def dump_dialogues(rom: bytearray, dump_header: list):
+def dump_dialogues(rom: bytearray, table: dict[int, tuple[str, int]]) -> list:
+    global NUM_POINTERS, NEW_DLG_END
+
+    if NUM_POINTERS == 0:
+        NUM_POINTERS = get_num_pointers(rom)
+
+    if NEW_DLG_END == 0:
+        NEW_DLG_END = NEW_DLG_PTR_START + 0x300000
+
     dlg_entries = []
     new_dlg_ptr_start = rutl.hirom_to_abs(NEW_DLG_PTR_START)
     new_dlg_end = rutl.hirom_to_abs(NEW_DLG_END)
-    table = load_table("table.tbl")
     prev_ptr = 0
+
     for dlg_index in range(NUM_POINTERS):
         ptr_offset = new_dlg_ptr_start + (dlg_index * 3)
-        # print(f"ptr_offset: {ptr_offset:06X}")
         ptr = rutl.hirom_to_abs(rutl.get_long(rom, ptr_offset))
-        # print(f"ptr_hr: {rutl.get_long(rom, ptr_offset):06X}")
-        # print(f"ptr: {ptr:06X}")
         if ptr < prev_ptr:
             raise ValueError(
                 f"dump_dialogues() dialogue {dlg_index:04X} ptr ({ptr:06X}) is smaller than previous ptr ({prev_ptr:06X})"
@@ -178,8 +212,11 @@ def dump_dialogues(rom: bytearray, dump_header: list):
         dlg_entry = DialogueEntry(dlg_index)
         dlg_entry.decode(rom, ptr, new_dlg_end, table)
         dlg_entries.append(dlg_entry)
-        # print(f"Dumping id {dlg_entry.id}")
 
+    return dlg_entries
+
+
+def build_text_dump(dlg_entries: list[DialogueEntry], dump_header: list):
     output = dump_header
     for dlg_entry in dlg_entries:
         output.append(f"// Caption #{dlg_entry.id}\n")
@@ -225,6 +262,24 @@ def expand_rom(rom: bytearray):
     return True
 
 
+def optimize_table(
+    table: dict[int, tuple[str, int]], dte: dict[int, tuple[int, int]]
+) -> dict[int, tuple[str, int]]:
+    for dte_id, dte_value in dte.items():
+        val_0 = table[dte_value[0]][0]
+        val_1 = table[dte_value[1]][0]
+        table[dte_id] = (val_0 + val_1, 0)
+    return table
+
+
+def write_dte_to_rom(rom: bytearray, dte: dict[int, tuple[int, int]]):
+    dte_offset = rutl.hirom_to_abs(DTE_TABLE)
+    for dte_id, bigram in dte.items():
+        offset = dte_offset + (dte_id - 0x80) * 2
+        rom[offset] = bigram[0]
+        rom[offset + 1] = bigram[1]
+
+
 def get_json_vars(json_data: dict):
     global \
         LAST_CD_INDEX, \
@@ -239,7 +294,8 @@ def get_json_vars(json_data: dict):
         FF3SUME_LAST_CE_OFFSET, \
         FF3USME_DLG_START, \
         FF3USME_DLG_END, \
-        APPROX_DLG_SIZE
+        APPROX_DLG_SIZE, \
+        DTE_TABLE
 
     LAST_CD_INDEX = utl.get_hex_dict_entry(json_data, "last_bank_cd_dialog_index")
     DLG_PTR_START = utl.get_hex_dict_entry(json_data, "dialog_ptr_start")
@@ -258,6 +314,7 @@ def get_json_vars(json_data: dict):
     )
     FF3USME_DLG_START = utl.get_hex_dict_entry(json_data, "ff3usme_dialog_start")
     FF3USME_DLG_END = utl.get_hex_dict_entry(json_data, "ff3usme_dialog_end")
+    DTE_TABLE = utl.get_hex_dict_entry(json_data, "dte_table")
 
     APPROX_DLG_SIZE = 0x30000 if FF3USME_EXP else 0x20000
 
@@ -277,31 +334,44 @@ if __name__ == "__main__":
         rom = utl.read_bin_file(file)
         had_header = rutl.trim_header(rom)
 
-        if expand_rom(rom):
-            write_asm_hack(rom)
+        dte_optimization = is_dte_optimization()
 
-            if FF3USME_EXP:
-                move_ff3usme_dialogs(rom)
-                expand_ff3usme_pointers(rom)
-            else:
-                move_vanilla_dialogs(rom)
-                expand_vanilla_pointers(rom)
-
-            os.makedirs(output_dir, exist_ok=True)
-
-            dump_header = write_dump_header()
-            dump = dump_dialogues(rom, dump_header)
-            dump_file = os.path.join(output_dir, f"{filename}-dump.txt")
-            utl.write_text_file(dump, dump_file)
-
-            if had_header:
-                rutl.add_header(rom)
-
-            rom_file = os.path.join(output_dir, f"{filename}-dpe{extension}")
+        if dte_optimization:
+            table = load_table("table.tbl")
+            dlg_entries = dump_dialogues(rom, table)
+            dte = build_dte(dlg_entries)
+            new_table = optimize_table(table, dte)
+            table_file = os.path.join(output_dir, f"{filename}-table.tbl")
+            save_table(new_table, table_file)
+            write_dte_to_rom(rom, dte)
+            rom_file = os.path.join(output_dir, f"{filename}-dte{extension}")
             utl.write_bin_file(rom, rom_file)
-            print_confirmation(rom_file, dump_file)
+            print(f"Wrote {table_file}")
+            print(f"Wrote {rom_file}")
         else:
-            print("Program stopped")
+            if expand_rom(rom):
+                write_asm_hack(rom)
+
+                if FF3USME_EXP:
+                    move_ff3usme_dialogs(rom)
+                    expand_ff3usme_pointers(rom)
+                else:
+                    move_vanilla_dialogs(rom)
+                    expand_vanilla_pointers(rom)
+
+                os.makedirs(output_dir, exist_ok=True)
+
+                dump_header = write_dump_header()
+                table = load_table("table.tbl")
+                dlg_entries = dump_dialogues(rom, table)
+                dump = build_text_dump(dlg_entries, dump_header)
+                dump_file = os.path.join(output_dir, f"{filename}-dump.txt")
+                utl.write_text_file(dump, dump_file)
+                rom_file = os.path.join(output_dir, f"{filename}-dpe{extension}")
+                utl.write_bin_file(rom, rom_file)
+                print_confirmation(rom_file, dump_file)
+            else:
+                print("Program stopped")
 
     else:
         print(f"No ROM file provided in the '{roms_dir}' folder!")

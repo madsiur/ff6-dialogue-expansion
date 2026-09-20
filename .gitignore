@@ -1,5 +1,7 @@
 .devcontainer
 tools
+saves
+mesen
 abcde
 output
 *.smc
